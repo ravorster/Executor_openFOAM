@@ -6,7 +6,7 @@ from typing import Dict
 import json
 from Executor_openFOAM.executor.api import module_status
 from Executor_openFOAM.executor.core import status_types
-from core.runtime import EXPERIMENTS, MODULES 
+from core.runtime import EXPERIMENTS, MODULES, EDF
 # MODULES = ["OpenFOAMCaseDirectory", "ParameterizedStructureBuild", "OpenFOAMSimulation", "OpenFOAMPostProcess"]
 
 router = APIRouter(prefix="/remote_ctrl/sim", tags=["experiment-config"])
@@ -17,13 +17,14 @@ class ConfigInputs(RootModel[Dict]):
 
 @router.post("/experiment/{experiment_uuid}/config/{module_name}")
 def config_inputs(experiment_uuid: str, module_name: str, payload: ConfigInputs):
+    # Value Validation/Setting
+    
     # Valid values
     match module_name:
         case "OpenFOAMCaseDirectory":
             valid_inputs = ["case_directory"]
         case "ParameterizedStructureBuild":
             valid_inputs = [
-                "module_name",
                 "create_structure",
                 "type",
                 "scale",
@@ -51,12 +52,17 @@ def config_inputs(experiment_uuid: str, module_name: str, payload: ConfigInputs)
         case "OpenFOAMPostProcess":
             valid_inputs = ["timeout"]
 
-    # Value Validation
-    for key in payload.keys:
+    
+    load = payload.model_dump()
+    for key in load.keys:
         if key not in valid_inputs:
             return {
                     "status": status_types.ModuleStatus.TERMINATED.value,
                     "msg": f"invalid input: {key}"
                     }
+        else:
+            pass
+    
+    writepath = router.prefix + f"/experiment/{experiment_uuid}/edf.json"
 
     return {"status":status_types.ModuleStatus.PROPOSED.value}

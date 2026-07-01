@@ -1,7 +1,10 @@
 from logging import config
 import threading
 import time
-import CCUS_CFD_execution_software
+import CCUS_CFD_execution_software.OpenFOAMCaseDirectory as OpenFOAMCaseDirectory
+import CCUS_CFD_execution_software.OpenFOAMSimulation as OpenFOAMSimulation
+import CCUS_CFD_execution_software.ParameterizedStructureBuild as ParameterizedStructureBuild
+import CCUS_CFD_execution_software.OpenFOAMPostProcess as OpenFOAMPostProcess
 from Executor_openFOAM.executor.core import status_types
 
 # In-memory experiment table
@@ -9,10 +12,12 @@ EXPERIMENTS = {}   # { uuid: {"status": "Q"} }
 # Executor-defined modules
 MODULES = [
      "OpenFOAMCaseDirectory", 
-    #  "ParameterizedStructureBuild", 
+     "ParameterizedStructureBuild", 
      "OpenFOAMSimulation", 
      "OpenFOAMPostProcess"
      ]
+# Persistent experiment definition file
+EDF = dict()
 
 def simulate_experiment(exp_uuid: str):
     try:
@@ -24,14 +29,37 @@ def simulate_experiment(exp_uuid: str):
         exp["status"] = status_types.ExperimentStatus.RUNNING.value
         print("SET TO R")
 
-        # time.sleep(3)
-        for m in exp["modules"]:
-            exp["modules"][m]["status"] = status_types.ExperimentStatus.RUNNING.value
-            print("RUNNING", m)
-            run(exp,m)
-            # time.sleep(3)
-            exp["modules"][m]["status"] = status_types.ExperimentStatus.COMPLETED.value
-            print("COMPLETED", m)
+        # Create OpenFOAM working directory
+        module = "OpenFOAMCaseDirectory"
+        exp["modules"][module]["status"] = status_types.ExperimentStatus.RUNNING.value
+        print("RUNNING", module)
+        print(OpenFOAMCaseDirectory.create_openfoam_case_dummy())
+        exp["modules"][module]["status"] = status_types.ExperimentStatus.COMPLETED.value
+        print("COMPLETED", module)
+        
+        # Put .stl in OpenFOAM working directory
+        module = "ParameterizedStructureBuild"
+        exp["modules"][module]["status"] = status_types.ExperimentStatus.RUNNING.value
+        print("RUNNING", module)
+        print(ParameterizedStructureBuild.parameterized_structure_build_dummy())
+        exp["modules"][module]["status"] = status_types.ExperimentStatus.COMPLETED.value
+        print("COMPLETED", module)
+
+        # Run OpenFOAM simulation
+        module = "OpenFOAMSimulation"
+        exp["modules"][module]["status"] = status_types.ExperimentStatus.RUNNING.value
+        print("RUNNING", module)
+        print(OpenFOAMSimulation.openFOAM_dummy())
+        exp["modules"][module]["status"] = status_types.ExperimentStatus.COMPLETED.value
+        print("COMPLETED", module)
+
+        # Do post-processing
+        module = "OpenFOAMPostProcess"
+        exp["modules"][module]["status"] = status_types.ExperimentStatus.RUNNING.value
+        print("RUNNING", module)
+        print(OpenFOAMPostProcess.openFOAM_postprocess_dummy())
+        exp["modules"][module]["status"] = status_types.ExperimentStatus.COMPLETED.value
+        print("COMPLETED", module)
 
         exp["status"] = status_types.ExperimentStatus.COMPLETED.value
         print("EXP COMPLETE")
