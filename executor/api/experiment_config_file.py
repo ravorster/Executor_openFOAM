@@ -1,6 +1,9 @@
 from fastapi import APIRouter, UploadFile, File
 from pydantic import BaseModel
 from typing import Optional
+from pathlib import Path
+
+from Executor_openFOAM.executor.core import status_types
 
 router = APIRouter(prefix="/remote_ctrl/sim", tags=["experiment-config-file"])
 
@@ -16,4 +19,11 @@ def config_file(
     meta: FileUploadMeta = None,
     file: UploadFile = File(...)
 ):
-    return {}
+    
+    if Path(file).suffix != ".stl":
+        return {"status": status_types.ModuleStatus.TERMINATED.value}
+    
+    # Deposit .stl file in the experiment directory
+    pass
+
+    return {"status":status_types.ModuleStatus.PROPOSED.value}

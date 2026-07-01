@@ -1,11 +1,18 @@
 from logging import config
 import threading
 import time
+import CCUS_CFD_execution_software
+from Executor_openFOAM.executor.core import status_types
 
 # In-memory experiment table
 EXPERIMENTS = {}   # { uuid: {"status": "Q"} }
 # Executor-defined modules
-MODULES = ["module_A", "module_B"]
+MODULES = [
+     "OpenFOAMCaseDirectory", 
+    #  "ParameterizedStructureBuild", 
+     "OpenFOAMSimulation", 
+     "OpenFOAMPostProcess"
+     ]
 
 def simulate_experiment(exp_uuid: str):
     try:
@@ -13,20 +20,20 @@ def simulate_experiment(exp_uuid: str):
         exp = EXPERIMENTS[exp_uuid]
         print("EXP FOUND:", exp)
 
-        time.sleep(3)
-        exp["status"] = "R"
+        # time.sleep(3)
+        exp["status"] = status_types.ExperimentStatus.RUNNING.value
         print("SET TO R")
 
-        time.sleep(3)
+        # time.sleep(3)
         for m in exp["modules"]:
-            exp["modules"][m]["status"] = "R"
+            exp["modules"][m]["status"] = status_types.ExperimentStatus.RUNNING.value
             print("RUNNING", m)
             run(exp,m)
-            time.sleep(3)
-            exp["modules"][m]["status"] = "C"
+            # time.sleep(3)
+            exp["modules"][m]["status"] = status_types.ExperimentStatus.COMPLETED.value
             print("COMPLETED", m)
 
-        exp["status"] = "C"
+        exp["status"] = status_types.ExperimentStatus.COMPLETED.value
         print("EXP COMPLETE")
 
     except Exception as e:
